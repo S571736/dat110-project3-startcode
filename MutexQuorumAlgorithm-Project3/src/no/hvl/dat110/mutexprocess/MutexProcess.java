@@ -137,14 +137,14 @@ public class MutexProcess extends UnicastRemoteObject implements ProcessInterfac
         }
         //TODO - Doublecheck if right
 
-        return majorityAcknowledged();
+
         // do something with the acknowledgement you received from the voters -
         // Idea: use the queueACK to collect GRANT/DENY messages and make sure queueACK is synchronized!!!
 
         // compute election result - Idea call majorityAcknowledged()
 
 
-        return false;  // change to the election result
+        return majorityAcknowledged();  // change to the election result
 
     }
 
@@ -152,7 +152,7 @@ public class MutexProcess extends UnicastRemoteObject implements ProcessInterfac
     public Message onMessageReceived(Message message) throws RemoteException {
 
         // increment the local clock
-
+        incrementclock();
         // Hint: for all 3 cases, use Message to send GRANT or DENY. e.g. message.setAcknowledgement(true) = GRANT
 
         /**
