@@ -92,7 +92,7 @@ public class MutexProcess extends UnicastRemoteObject implements ProcessInterfac
         message.setOptype(OperationType.WRITE);
 
         WANTS_TO_ENTER_CS = true;
-        boolean electionresult = multicastMessage(message);
+        boolean electionresult = multicastMessage(message, N);
 
 
         // multicast read request to start the voting to N/2 + 1 replicas (majority) - optimal.
@@ -110,10 +110,11 @@ public class MutexProcess extends UnicastRemoteObject implements ProcessInterfac
 
         WANTS_TO_ENTER_CS = true;
 
+        boolean electionresult = multicastMessage(message, N);
         // multicast read request to start the voting to N/2 + 1 replicas (majority) - optimal. You could as well send to all the replicas that have the file
 
 
-        return false;  // change to the election result
+        return electionresult;  // change to the election result
     }
 
     // multicast message to N/2 + 1 processes (random processes)
