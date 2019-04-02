@@ -6,6 +6,7 @@ import no.hvl.dat110.util.Util;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.AccessException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -92,7 +93,7 @@ public class MutexProcess extends UnicastRemoteObject implements ProcessInterfac
         message.setOptype(OperationType.WRITE);
 
         WANTS_TO_ENTER_CS = true;
-        boolean electionresult = multicastMessage(message, N);
+        boolean electionresult = multicastMessage(message, N / 2 + 1);
 
 
         // multicast read request to start the voting to N/2 + 1 replicas (majority) - optimal.
@@ -110,7 +111,7 @@ public class MutexProcess extends UnicastRemoteObject implements ProcessInterfac
 
         WANTS_TO_ENTER_CS = true;
 
-        boolean electionresult = multicastMessage(message, N);
+        boolean electionresult = multicastMessage(message, N / 2 + 1);
         // multicast read request to start the voting to N/2 + 1 replicas (majority) - optimal. You could as well send to all the replicas that have the file
 
 
@@ -122,12 +123,23 @@ public class MutexProcess extends UnicastRemoteObject implements ProcessInterfac
 
         replicas.remove(this.procStubname);            // remove this process from the list
 
-
         // randomize - shuffle list each time - to get random processes each time
+        Collections.shuffle(replicas);
 
         // multicast message to N/2 + 1 processes (random processes) - block until feedback is received
+        for (int i = 0; i < N / 2 + 1; i++) {
+            try {
+                Message m = (Message) Util.registryHandle(Util.getProcessReplicas().get(i));
+                queueACK.add(m);
+            } catch (NotBoundException e) {
+                e.printStackTrace();
+            }
+        }
+        //TODO - Doublecheck if right
 
-        // do something with the acknowledgement you received from the voters - Idea: use the queueACK to collect GRANT/DENY messages and make sure queueACK is synchronized!!!
+        return majorityAcknowledged();
+        // do something with the acknowledgement you received from the voters -
+        // Idea: use the queueACK to collect GRANT/DENY messages and make sure queueACK is synchronized!!!
 
         // compute election result - Idea call majorityAcknowledged()
 
@@ -167,9 +179,14 @@ public class MutexProcess extends UnicastRemoteObject implements ProcessInterfac
         // count the number of yes (i.e. where message.isAcknowledged = true)
         // check if it is the majority or not
         // return the decision (true or false)
+        int i = 0;
+        for (Message m : queueACK) {
+            if (m.isAcknowledged()) {
+                i++;
+            }
+        }
 
-
-        return false;            // change this to the result of the vote
+        return i >= queueACK.size();            // change this to the result of the vote
     }
 
 
