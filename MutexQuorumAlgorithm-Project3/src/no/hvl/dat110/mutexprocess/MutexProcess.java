@@ -132,7 +132,7 @@ public class MutexProcess extends UnicastRemoteObject implements ProcessInterfac
             try {
                 Message reply = Util.registryHandle(stub).onMessageReceived(message);
                 queueACK.add(reply);
-            } catch (NotBoundException e) {
+        } catch (NotBoundException e) {
                 e.printStackTrace();
             }
         }

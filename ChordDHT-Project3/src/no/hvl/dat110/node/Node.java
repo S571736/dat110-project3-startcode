@@ -419,7 +419,7 @@ public class Node extends UnicastRemoteObject implements ChordNodeInterface {
 
         // release CS lock if voter initiator says he was denied access bcos he lacks majority votes
         // otherwise lock is kept
-        if (!message.isAcknowledged()){
+        if (!message.isAcknowledged()) {
             releaseLocks();
         }
 
@@ -431,28 +431,54 @@ public class Node extends UnicastRemoteObject implements ChordNodeInterface {
         // check the operation type: we expect a WRITE operation to do this.
         // perform operation by using the Operations class
         // Release locks after this operation
-        if (message.getOptype() == OperationType.WRITE){
+        if (message.getOptype() == OperationType.WRITE) {
             Operations operation = new Operations(this, message, activenodesforfile);
             operation.performOperation();
 
             releaseLocks();
-        }else if(message.getOptype() == OperationType.READ){
+        } else if (message.getOptype() == OperationType.READ) {
             releaseLocks();
+
         }
     }
 
     @Override
     public void multicastUpdateOrReadReleaseLockOperation(Message message) throws RemoteException {
+        ArrayList<Message> replicas = new ArrayList<Message>(activenodesforfile);
 
         // check the operation type:
         // if this is a write operation, multicast the update to the rest of the replicas (voters)
         // otherwise if this is a READ operation multicast releaselocks to the replicas (voters)
+
+        Operations operation = new Operations(this, message, activenodesforfile);
+
+        if (message.getOptype() == OperationType.WRITE) {
+            operation.multicastOperationToReplicas(message);
+        } else {
+            operation.multicastReadReleaseLocks();
+        }
     }
 
     @Override
     public void multicastVotersDecision(Message message) throws RemoteException {
 
         // multicast voters decision to the rest of the replicas (i.e activenodesforfile)
+
+        ArrayList<Message> replicas = new ArrayList<Message>(activenodesforfile);
+
+        for (Message m : replicas) {
+            String nodeID = m.getNodeID().toString();
+            String nodeIP = m.getNodeIP();
+
+            try {
+                Registry registry = Util.locateRegistry(nodeIP);
+                ChordNodeInterface node = (ChordNodeInterface) registry.lookup(nodeID);
+
+                node.onReceivedVotersDecision(message);
+            } catch (NotBoundException e) {
+                //e.printStackTrace();
+            }
+        }
 
 
     }
