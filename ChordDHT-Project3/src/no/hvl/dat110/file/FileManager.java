@@ -227,7 +227,6 @@ public class FileManager extends Thread {
     /**
      * create the localfile with the node's name and id as content of the file
      *
-     * @param nodename
      * @throws RemoteException
      */
     public void createLocalFile() throws RemoteException {
