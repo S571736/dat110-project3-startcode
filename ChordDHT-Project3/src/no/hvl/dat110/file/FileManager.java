@@ -22,6 +22,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class FileManager extends Thread {
@@ -88,18 +89,18 @@ public class FileManager extends Thread {
         // create replicas
         Set<Message> messages = new HashSet<>();
         // findsuccessors for each file replica and save the result (fileID) for each successor
-        for (BigInteger id : replicafiles) {
-            ChordNodeInterface node = chordnode.findSuccessor(id);
+            for (BigInteger id : replicafiles) {
+                ChordNodeInterface node = chordnode.findSuccessor(id);
 
-            if (node != null) {
-                // if we find the successor node of fileID, we can retrieve the message associated with a fileID by calling the getFilesMetadata() of chordnode.
-                Message msg = node.getFilesMetadata().get(id);
-
-                if (msg != null && checkDuplicateActiveNode(messages, msg)) {
-                    messages.add(msg);
+                if (node != null) {
+                    // if we find the successor node of fileID, we can retrieve the message associated with a fileID by calling the getFilesMetadata() of chordnode.
+                    Message msg = node.getFilesMetadata().get(id);
+                    //msg != null &&
+                    if (!checkDuplicateActiveNode(messages, msg)) {
+                        messages.add(msg);
+                    }
                 }
             }
-        }
 
         // save the message in a list but eliminate duplicated entries. e.g a node may be repeated because it maps more than one replicas to its id. (use checkDuplicateActiveNode)
 

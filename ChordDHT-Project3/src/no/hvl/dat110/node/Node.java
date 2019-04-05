@@ -55,7 +55,7 @@ public class Node extends UnicastRemoteObject implements ChordNodeInterface {
         fingerTable = new ArrayList<ChordNodeInterface>();
         fileKey = new HashSet<BigInteger>();
         // setNodeIP(InetAddress.getLocalHost().getHostAddress());	// use the IP address of the host
-        setNodeIP(InetAddress.getLocalHost().getHostAddress());                                        // use a different name as "IP" for single machine simulation
+        setNodeIP(nodename);                                        // use a different name as "IP" for single machine simulation
         BigInteger hashvalue = Hash.hashOf(getNodeIP());            // use the SHA-1  from Hash class
         setNodeID(hashvalue);
 
@@ -314,21 +314,24 @@ public class Node extends UnicastRemoteObject implements ChordNodeInterface {
         Collections.shuffle(replicas);
 
         int quorum = replicas.size() / 2 + 1;
+        synchronized(queueACK){
+            queueACK.clear();
+            for (Message activeNodes : replicas) {
+                String nodeIP = activeNodes.getNodeIP();
+                String nodeID = activeNodes.getNodeID().toString();
+                try {
+                    Registry registry = Util.locateRegistry(nodeIP);
 
-        for (Message activeNodes : replicas) {
-            String nodeIP = activeNodes.getNodeIP();
-            String nodeID = activeNodes.getNodeID().toString();
-            try {
-                Registry registry = Util.locateRegistry(nodeIP);
-
-                ChordNodeInterface node = (ChordNodeInterface) registry.lookup(nodeID);
-                Message reply = node.onMessageReceived(message);
-                queueACK.add(reply);
-            } catch (NotBoundException e) {
-                e.printStackTrace();
+                    ChordNodeInterface node = (ChordNodeInterface) registry.lookup(nodeID);
+                    Message reply = node.onMessageReceived(message);
+                    queueACK.add(reply);
+                } catch (NotBoundException e) {
+                    e.printStackTrace();
+                }
             }
+            return majorityAcknowledged();
         }
-        return majorityAcknowledged();
+
     }
 
     @Override

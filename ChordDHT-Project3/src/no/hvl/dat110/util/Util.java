@@ -30,8 +30,8 @@ public class Util {
 
 		java.rmi.registry.Registry registry = null;
 		try {
-			registry = LocateRegistry.getRegistry(ipaddress, StaticTracker.PORT);
-			//registry = LocateRegistry.getRegistry(StaticTracker.PORT);
+			//registry = LocateRegistry.getRegistry(ipaddress, StaticTracker.PORT);
+			registry = LocateRegistry.getRegistry(StaticTracker.PORT);
 			registry.list();
 		} catch (RemoteException e) {
 			registry = null;
